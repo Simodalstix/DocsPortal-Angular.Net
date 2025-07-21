@@ -2,7 +2,7 @@
 
 A comprehensive cloud-native document management portal showcasing modern DevOps practices, Azure infrastructure, and full-stack development skills. This project demonstrates expertise in the complete technology stack mentioned in the job requirements.
 
-## 🎯 Project Overview
+## Project Overview
 
 **SmartDocs Portal** is a role-based document management system designed to showcase:
 
@@ -12,7 +12,7 @@ A comprehensive cloud-native document management portal showcasing modern DevOps
 - **Content Delivery** simulating Akamai CDN functionality
 - **Enterprise Integration** patterns with AEM-like content management
 
-## 🏗️ Architecture Highlights
+## Architecture Highlights
 
 ```
 Internet → Azure Front Door (CDN/WAF) → App Gateway → App Services
@@ -32,7 +32,7 @@ Internet → Azure Front Door (CDN/WAF) → App Gateway → App Services
 - **Storage**: Azure Blob Storage for document management
 - **Monitoring**: Application Insights and Azure Monitor
 
-## 🚀 Technology Stack Alignment
+## Technology Stack Alignment
 
 | **Job Requirement**      | **Implementation**            | **Location**                                                                       |
 | ------------------------ | ----------------------------- | ---------------------------------------------------------------------------------- |
@@ -45,7 +45,7 @@ Internet → Azure Front Door (CDN/WAF) → App Gateway → App Services
 | **Networking**           | VNet, NSGs, Private Endpoints | [`infra/terraform/main.tf`](infra/terraform/main.tf)                               |
 | **Cloud Infrastructure** | Terraform IaC with modules    | [`infra/terraform/modules/`](infra/terraform/modules/)                             |
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 DocsPortal-Angular.Net/
@@ -65,7 +65,7 @@ DocsPortal-Angular.Net/
 └── 📄 README.md                      # This file
 ```
 
-## 🛠️ Infrastructure Modules
+## Infrastructure Modules
 
 ### Core Infrastructure Components:
 
@@ -80,7 +80,7 @@ DocsPortal-Angular.Net/
 - **[Development](infra/terraform/dev/terraform.tfvars)** - Cost-optimized for development
 - **[Production](infra/terraform/prod/terraform.tfvars)** - Performance and reliability optimized
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -150,7 +150,7 @@ npm install
 npm run build --prod
 ```
 
-## 🔄 CI/CD Pipeline Features
+## CI/CD Pipeline Features
 
 ### GitHub Actions Pipeline
 
@@ -167,7 +167,7 @@ npm run build --prod
 - **Integration Testing**: Automated health checks
 - **Notifications**: Teams integration for deployment status
 
-## 🛡️ Security Features
+## Security Features
 
 ### Network Security
 
@@ -190,7 +190,7 @@ npm run build --prod
 - **Storage Encryption**: Blob storage encryption
 - **Backup & Recovery**: Automated backup strategies
 
-## 📊 Monitoring & Observability
+## Monitoring & Observability
 
 ### Application Monitoring
 
@@ -206,7 +206,7 @@ npm run build --prod
 - **Security Center**: Security posture monitoring
 - **Compliance**: Policy and governance tracking
 
-## 💰 Cost Optimization
+## Cost Optimization
 
 ### Development Environment
 
@@ -222,7 +222,7 @@ npm run build --prod
 - **High Availability**: GRS storage, zone redundancy
 - **Advanced Monitoring**: Full Application Insights
 
-## 📚 Documentation
+## Documentation
 
 ### Architecture & Design
 
@@ -237,7 +237,7 @@ npm run build --prod
 - **[Frontend App](frontend/angular-app/README.md)** - Angular application guide
 - **[AEM Mock](aem-mock/README.md)** - Content management API simulation
 
-## 🎯 Skills Demonstrated
+## Skills Demonstrated
 
 ### Cloud & Infrastructure
 
@@ -263,7 +263,7 @@ npm run build --prod
 - ✅ **Content Management**: AEM-like headless CMS integration
 - ✅ **CDN Integration**: Global content delivery with caching strategies
 
-## 🚀 Next Steps
+## Next Steps
 
 ### Immediate Deployment
 
@@ -281,7 +281,7 @@ npm run build --prod
 - **Multi-Region Deployment**: Global disaster recovery setup
 - **API Management**: Azure API Management integration
 
-## 📞 Contact & Support
+## Contact & Support
 
 This project serves as a comprehensive demonstration of modern cloud infrastructure and DevOps practices. It showcases the ability to design, implement, and maintain enterprise-grade solutions using Azure cloud services.
 
