@@ -4,7 +4,6 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using DocsPortal.Api.Data;
 using DocsPortal.Api.Services;
-using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,14 +13,25 @@ builder.Services.AddControllers();
 // Entity Framework with modern configuration
 builder.Services.AddDbContext<DocsPortalContext>(options =>
 {
-    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-    options.UseSqlServer(connectionString, sqlOptions =>
+    if (builder.Environment.IsDevelopment())
     {
-        sqlOptions.EnableRetryOnFailure(
-            maxRetryCount: 5,
-            maxRetryDelay: TimeSpan.FromSeconds(30),
-            errorNumbersToAdd: null);
-    });
+        // Use SQLite for development (works on Linux/WSL)
+        var connectionString = builder.Configuration.GetConnectionString("SqliteConnection")
+                              ?? "Data Source=smartdocs.db";
+        options.UseSqlite(connectionString);
+    }
+    else
+    {
+        // Use SQL Server for production
+        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+        options.UseSqlServer(connectionString, sqlOptions =>
+        {
+            sqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(30),
+                errorNumbersToAdd: null);
+        });
+    }
 });
 
 // Modern JWT Authentication
@@ -71,63 +81,26 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 // Modern OpenAPI configuration
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
-builder.Services.AddSwaggerGen(options =>
-{
-    options.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = "SmartDocs Portal API",
-        Version = "v1",
-        Description = "Modern document management portal with role-based access control",
-        Contact = new OpenApiContact
-        {
-            Name = "SmartDocs Team",
-            Email = "support@smartdocs.com"
-        }
-    });
 
-    // JWT Bearer token configuration
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token.",
-        Name = "Authorization",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer",
-        BearerFormat = "JWT"
-    });
+// Add Swagger services
+builder.Services.AddSwaggerGen();
 
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
-        }
-    });
-});
-
-// Health checks with detailed configuration
+// Health checks
 builder.Services.AddHealthChecks()
-    .AddSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection")!,
-        name: "sqlserver",
-        timeout: TimeSpan.FromSeconds(30))
     .AddCheck("self", () => Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy());
 
-// Logging configuration
-builder.Logging.ClearProviders();
-builder.Logging.AddConsole();
-builder.Logging.AddDebug();
-
-if (builder.Environment.IsProduction())
+// Add database-specific health checks
+if (builder.Environment.IsDevelopment())
 {
-    builder.Logging.AddApplicationInsights();
+    // SQLite health check for development
+    builder.Services.AddHealthChecks()
+        .AddSqlite(builder.Configuration.GetConnectionString("SqliteConnection") ?? "Data Source=smartdocs.db");
+}
+else
+{
+    // SQL Server health check for production
+    builder.Services.AddHealthChecks()
+        .AddSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")!);
 }
 
 var app = builder.Build();
@@ -137,12 +110,11 @@ if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
     app.MapOpenApi();
+    app.UseSwagger();
     app.UseSwaggerUI(options =>
     {
-        options.SwaggerEndpoint("/openapi/v1.json", "SmartDocs Portal API v1");
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "SmartDocs Portal API v1");
         options.RoutePrefix = string.Empty;
-        options.DisplayRequestDuration();
-        options.EnableTryItOutByDefault();
     });
 }
 else
@@ -163,10 +135,6 @@ app.MapControllers();
 
 // Health check endpoints
 app.MapHealthChecks("/health");
-app.MapHealthChecks("/health/ready", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
-{
-    Predicate = check => check.Tags.Contains("ready")
-});
 
 // Minimal API endpoints for quick health status
 app.MapGet("/", () => new { 
