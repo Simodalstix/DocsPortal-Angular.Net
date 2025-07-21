@@ -166,17 +166,18 @@ module "sql_database" {
 
   # Authentication configuration
   admin_username = var.sql_admin_username
+  admin_password = module.key_vault.sql_admin_password
 
   # Network access configuration
   subnet_id         = azurerm_subnet.main["database"].id
   allowed_ip_ranges = var.allowed_ip_ranges
 
   # Database configuration
-  sku_name      = var.sql_database_sku
-  enable_backup = var.enable_backup
+  sku_name = var.sql_database_sku
 
-  # Integration with Key Vault for secrets
-  key_vault_id = module.key_vault.key_vault_id
+  # Auditing configuration
+  audit_storage_endpoint   = module.storage_account.primary_blob_endpoint
+  audit_storage_access_key = module.storage_account.primary_access_key
 
   tags = local.common_tags
 }
@@ -188,6 +189,7 @@ module "app_service" {
   name_prefix         = local.name_prefix
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
+  environment         = var.environment
 
   # App Service Plan configuration
   sku_tier = var.app_service_sku.tier
