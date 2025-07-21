@@ -1,51 +1,299 @@
-Project Title: SmartDocs Portal
-A role-based document management portal for internal teams (e.g. HR, Legal, Finance) with public-facing content delivery via CDN
+# SmartDocs Portal - Azure Infrastructure Demo
 
-🔧 Tech Stack Overview
-Layer Tech Used Why It Matches
-Frontend Angular Matches job ad
-Backend API .NET (ASP.NET Core Web API) Matches job ad
-CMS Integration AEM (mocked via JSON APIs or AEM as a headless CMS) Matches job ad
-CDN Akamai (simulate with Azure Front Door or Cloudflare if Akamai isn’t available) Matches job ad
-Cloud Infrastructure Azure App Service, Azure SQL, Key Vault, Blob Storage Matches job ad
-CI/CD GitHub Actions or Azure DevOps Pipelines Matches job ad
-AuthN/AuthZ Azure AD B2C (or IdentityServer) Real-world enterprise auth
-Networking/Infra Azure VNets, NSGs, App Gateway Shows cloud infra + networking skills
-OS Layer Linux VMs for self-hosted agents or nginx reverse proxy Highlights OS understanding
+A comprehensive cloud-native document management portal showcasing modern DevOps practices, Azure infrastructure, and full-stack development skills. This project demonstrates expertise in the complete technology stack mentioned in the job requirements.
 
-🎯 Features
-Secure login and RBAC (Admin, Editor, Viewer roles)
+## 🎯 Project Overview
 
-Upload, tag, and manage internal documents (stored in Azure Blob Storage or SQL)
+**SmartDocs Portal** is a role-based document management system designed to showcase:
 
-Public-facing content pages delivered via AEM (real or mocked)
+- **Azure Cloud Infrastructure** with enterprise-grade security and scalability
+- **Modern DevOps Practices** with Infrastructure as Code and CI/CD pipelines
+- **Full-Stack Development** using Angular and .NET technologies
+- **Content Delivery** simulating Akamai CDN functionality
+- **Enterprise Integration** patterns with AEM-like content management
 
-Static resources cached and served via CDN (simulate Akamai behavior)
+## 🏗️ Architecture Highlights
 
-CI/CD for both frontend and backend deployments
+```
+Internet → Azure Front Door (CDN/WAF) → App Gateway → App Services
+                                                    ↓
+                                            Private Network
+                                                    ↓
+                                    SQL Database + Key Vault + Storage
+```
 
-Custom error pages, routing, and fallback mechanisms
+### Key Components:
 
-Monitoring & logging via Azure Monitor + App Insights
+- **Frontend**: Angular SPA hosted on Azure App Service
+- **Backend**: .NET 8 Web API with containerized deployment
+- **Database**: Azure SQL Database with private endpoints
+- **CDN**: Azure Front Door simulating Akamai functionality
+- **Security**: Azure Key Vault, WAF, and managed identities
+- **Storage**: Azure Blob Storage for document management
+- **Monitoring**: Application Insights and Azure Monitor
 
-💡 Bonus: Project Themes You Can Highlight
-“CDN Edge Routing”: Simulate Akamai by showing how public content is routed from a CDN (add an Origin failover to Blob Storage).
+## 🚀 Technology Stack Alignment
 
-“AEM Integration”: Mock AEM API responses or use a headless CMS like Contentful or Sanity to stand in.
+| **Job Requirement**      | **Implementation**            | **Location**                                                                       |
+| ------------------------ | ----------------------------- | ---------------------------------------------------------------------------------- |
+| **.NET**                 | ASP.NET Core 8 Web API        | [`backend/dotnet-api/`](backend/dotnet-api/)                                       |
+| **Angular**              | Angular 17+ SPA               | [`frontend/angular-app/`](frontend/angular-app/)                                   |
+| **Azure**                | Complete cloud infrastructure | [`infra/terraform/`](infra/terraform/)                                             |
+| **AEM**                  | Mocked content management API | [`aem-mock/`](aem-mock/)                                                           |
+| **Akamai**               | Azure Front Door with CDN/WAF | [`infra/terraform/modules/cdn_frontdoor/`](infra/terraform/modules/cdn_frontdoor/) |
+| **CI/CD**                | GitHub Actions + Azure DevOps | [`ci-cd/`](ci-cd/)                                                                 |
+| **Networking**           | VNet, NSGs, Private Endpoints | [`infra/terraform/main.tf`](infra/terraform/main.tf)                               |
+| **Cloud Infrastructure** | Terraform IaC with modules    | [`infra/terraform/modules/`](infra/terraform/modules/)                             |
 
-“CI/CD Pipelines”: Set up a two-stage deploy with approvals for prod, include automated Angular builds and .NET tests.
+## 📁 Project Structure
 
-“Networking Troubleshooting”: Document how you'd debug a 502 error from App Gateway -> App Service, or a DNS issue from CDN -> Origin.
+```
+DocsPortal-Angular.Net/
+├── 📁 frontend/angular-app/          # Angular frontend application
+├── 📁 backend/dotnet-api/            # .NET Web API backend
+├── 📁 aem-mock/                      # AEM content management simulation
+├── 📁 infra/                         # Infrastructure as Code
+│   ├── 📁 terraform/                 # Terraform configurations
+│   │   ├── 📁 modules/               # Reusable Terraform modules
+│   │   ├── 📁 dev/                   # Development environment config
+│   │   └── 📁 prod/                  # Production environment config
+│   ├── 📁 scripts/                   # Deployment automation scripts
+│   └── 📁 docs/                      # Architecture documentation
+├── 📁 ci-cd/                         # CI/CD pipeline configurations
+│   ├── 📁 github-actions/            # GitHub Actions workflows
+│   └── 📁 azure-pipelines/           # Azure DevOps pipelines
+└── 📄 README.md                      # This file
+```
 
-✅ What You’ll Be Able to Demonstrate
-Angular + .NET real-world integration
+## 🛠️ Infrastructure Modules
 
-Cloud infra setup and config in Azure
+### Core Infrastructure Components:
 
-CDN and CMS delivery pipelines
+1. **[App Service Module](infra/terraform/modules/app_service/)** - Hosts .NET API and Angular frontend
+2. **[SQL Database Module](infra/terraform/modules/sql_database/)** - Managed database with security
+3. **[Storage Account Module](infra/terraform/modules/storage_account/)** - Document and static file storage
+4. **[Key Vault Module](infra/terraform/modules/key_vault/)** - Secrets and certificate management
+5. **[CDN Front Door Module](infra/terraform/modules/cdn_frontdoor/)** - Global CDN with WAF protection
 
-CI/CD best practices and automation
+### Environment Configurations:
 
-Troubleshooting skills across layers
+- **[Development](infra/terraform/dev/terraform.tfvars)** - Cost-optimized for development
+- **[Production](infra/terraform/prod/terraform.tfvars)** - Performance and reliability optimized
 
-Evidence of self-driven full-stack delivery
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Azure CLI installed and authenticated
+- Terraform >= 1.6.0
+- Node.js >= 18 (for Angular)
+- .NET 8 SDK
+- Git
+
+### 1. Clone and Setup
+
+```bash
+git clone <repository-url>
+cd DocsPortal-Angular.Net
+```
+
+### 2. Deploy Infrastructure
+
+#### Option A: Using Deployment Script (Recommended)
+
+```bash
+# Initialize backend storage
+./infra/scripts/deploy.sh --init-backend --environment dev
+
+# Deploy to development
+./infra/scripts/deploy.sh --environment dev --action apply --auto-approve
+```
+
+#### Option B: Using CI/CD Pipeline
+
+```bash
+# Push to develop branch triggers dev deployment
+git checkout develop
+git push origin develop
+
+# Push to main branch triggers prod deployment (with approval)
+git checkout main
+git push origin main
+```
+
+#### Option C: Manual Terraform
+
+```bash
+cd infra/terraform
+
+# Initialize
+terraform init \
+  -backend-config="resource_group_name=rg-smartdocs-tfstate-dev" \
+  -backend-config="storage_account_name=sastmartdocstfstatedev" \
+  -backend-config="container_name=tfstate" \
+  -backend-config="key=smartdocs-dev.terraform.tfstate"
+
+# Deploy
+terraform apply -var-file="dev/terraform.tfvars"
+```
+
+### 3. Deploy Applications
+
+```bash
+# Build and deploy .NET API
+cd backend/dotnet-api
+dotnet publish -c Release
+
+# Build and deploy Angular app
+cd frontend/angular-app
+npm install
+npm run build --prod
+```
+
+## 🔄 CI/CD Pipeline Features
+
+### GitHub Actions Pipeline
+
+- **Automated Triggers**: Push to main/develop branches
+- **Security Scanning**: Checkov security analysis
+- **Cost Estimation**: Infracost integration
+- **Environment Protection**: Manual approval for production
+- **Artifact Management**: Terraform plans and logs
+
+### Azure DevOps Pipeline
+
+- **Multi-Stage Deployment**: Validation → Security → Plan → Deploy
+- **Approval Gates**: Environment-specific approvals
+- **Integration Testing**: Automated health checks
+- **Notifications**: Teams integration for deployment status
+
+## 🛡️ Security Features
+
+### Network Security
+
+- **Virtual Network**: Isolated network with segmented subnets
+- **Network Security Groups**: Firewall rules for each tier
+- **Private Endpoints**: Secure connectivity to PaaS services
+- **WAF Protection**: Azure Front Door with security rules
+
+### Identity & Access
+
+- **Managed Identities**: Passwordless authentication
+- **Azure AD Integration**: Enterprise authentication
+- **Key Vault**: Centralized secrets management
+- **RBAC**: Role-based access control
+
+### Data Protection
+
+- **TLS 1.2+**: Encrypted communications
+- **Transparent Data Encryption**: Database encryption at rest
+- **Storage Encryption**: Blob storage encryption
+- **Backup & Recovery**: Automated backup strategies
+
+## 📊 Monitoring & Observability
+
+### Application Monitoring
+
+- **Application Insights**: Performance and error tracking
+- **Custom Dashboards**: Business and technical metrics
+- **Alerting**: Proactive issue detection
+- **Log Analytics**: Centralized logging
+
+### Infrastructure Monitoring
+
+- **Azure Monitor**: Resource health and performance
+- **Cost Management**: Budget alerts and optimization
+- **Security Center**: Security posture monitoring
+- **Compliance**: Policy and governance tracking
+
+## 💰 Cost Optimization
+
+### Development Environment
+
+- **Estimated Monthly Cost**: $10-20
+- **Free Tier Usage**: App Service F1, Basic SQL
+- **Storage**: LRS replication
+- **Monitoring**: Basic metrics
+
+### Production Environment
+
+- **Estimated Monthly Cost**: $50-100
+- **Performance Tiers**: Standard App Service, SQL
+- **High Availability**: GRS storage, zone redundancy
+- **Advanced Monitoring**: Full Application Insights
+
+## 📚 Documentation
+
+### Architecture & Design
+
+- **[Architecture Overview](infra/docs/ARCHITECTURE.md)** - Detailed system architecture
+- **[Deployment Guide](infra/docs/DEPLOYMENT_GUIDE.md)** - Comprehensive deployment instructions
+- **[Security Guidelines](infra/docs/SECURITY.md)** - Security best practices
+- **[Cost Optimization](infra/docs/COST_OPTIMIZATION.md)** - Cost management strategies
+
+### API Documentation
+
+- **[Backend API](backend/dotnet-api/README.md)** - .NET Web API documentation
+- **[Frontend App](frontend/angular-app/README.md)** - Angular application guide
+- **[AEM Mock](aem-mock/README.md)** - Content management API simulation
+
+## 🎯 Skills Demonstrated
+
+### Cloud & Infrastructure
+
+- ✅ **Azure Services**: App Service, SQL Database, Storage, Key Vault, Front Door
+- ✅ **Infrastructure as Code**: Terraform with modular design
+- ✅ **Networking**: VNet, NSGs, Private Endpoints, Load Balancing
+- ✅ **Security**: WAF, Managed Identities, Encryption, Access Control
+- ✅ **Monitoring**: Application Insights, Azure Monitor, Log Analytics
+
+### DevOps & Automation
+
+- ✅ **CI/CD Pipelines**: GitHub Actions and Azure DevOps
+- ✅ **Deployment Automation**: Multi-environment deployments
+- ✅ **Security Scanning**: Automated security and compliance checks
+- ✅ **Cost Management**: Infrastructure cost estimation and optimization
+- ✅ **Documentation**: Comprehensive technical documentation
+
+### Development & Integration
+
+- ✅ **Full-Stack Development**: Angular frontend with .NET backend
+- ✅ **API Design**: RESTful APIs with proper authentication
+- ✅ **Database Design**: Relational database with security best practices
+- ✅ **Content Management**: AEM-like headless CMS integration
+- ✅ **CDN Integration**: Global content delivery with caching strategies
+
+## 🚀 Next Steps
+
+### Immediate Deployment
+
+1. **Fork this repository** to your GitHub account
+2. **Set up Azure subscription** and service principal
+3. **Configure GitHub secrets** for automated deployment
+4. **Deploy to development** environment for testing
+5. **Review and customize** for your specific requirements
+
+### Enhancement Opportunities
+
+- **Container Orchestration**: Migrate to Azure Container Apps
+- **Microservices Architecture**: Break down monolithic components
+- **Advanced Monitoring**: Custom dashboards and alerting
+- **Multi-Region Deployment**: Global disaster recovery setup
+- **API Management**: Azure API Management integration
+
+## 📞 Contact & Support
+
+This project serves as a comprehensive demonstration of modern cloud infrastructure and DevOps practices. It showcases the ability to design, implement, and maintain enterprise-grade solutions using Azure cloud services.
+
+**Key Highlights:**
+
+- 🏗️ **Production-Ready Architecture** with security and scalability
+- 🔄 **Modern DevOps Practices** with automated CI/CD
+- 🛡️ **Enterprise Security** with defense-in-depth approach
+- 📊 **Comprehensive Monitoring** and observability
+- 💰 **Cost-Optimized** design with clear pricing models
+- 📚 **Thorough Documentation** for maintenance and knowledge transfer
+
+---
+
+_This project demonstrates readiness for senior cloud infrastructure and DevOps roles, with practical experience in Azure, .NET, Angular, and modern development practices._

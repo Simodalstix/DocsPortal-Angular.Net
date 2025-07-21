@@ -1,0 +1,356 @@
+# Azure DevOps Pipeline for Infrastructure Deployment
+# This pipeline deploys the Terraform infrastructure to Azure
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    include:
+      - infra/terraform/*
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - infra/terraform/*
+
+parameters:
+  - name: environment
+    displayName: "Target Environment"
+    type: string
+    default: "dev"
+    values:
+      - dev
+      - prod
+  - name: action
+    displayName: "Terraform Action"
+    type: string
+    default: "apply"
+    values:
+      - plan
+      - apply
+      - destroy
+
+variables:
+  - name: terraformVersion
+    value: "1.6.0"
+  - name: workingDirectory
+    value: "$(System.DefaultWorkingDirectory)/infra/terraform"
+  - name: environment
+    ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
+      value: "prod"
+    ${{ else }}:
+      value: "dev"
+
+stages:
+  - stage: TerraformValidate
+    displayName: "Terraform Validate"
+    jobs:
+      - job: Validate
+        displayName: "Validate Terraform Configuration"
+        pool:
+          vmImage: "ubuntu-latest"
+
+        steps:
+          - checkout: self
+            displayName: "Checkout Repository"
+
+          - task: TerraformInstaller@1
+            displayName: "Install Terraform"
+            inputs:
+              terraformVersion: $(terraformVersion)
+
+          - task: TerraformTaskV4@4
+            displayName: "Terraform Format Check"
+            inputs:
+              provider: "azurerm"
+              command: "custom"
+              customCommand: "fmt"
+              commandOptions: "-check -recursive"
+              workingDirectory: $(workingDirectory)
+
+          - task: TerraformTaskV4@4
+            displayName: "Terraform Init"
+            inputs:
+              provider: "azurerm"
+              command: "init"
+              workingDirectory: $(workingDirectory)
+              backendServiceArm: "Azure-ServiceConnection"
+              backendAzureRmResourceGroupName: "rg-smartdocs-tfstate-$(environment)"
+              backendAzureRmStorageAccountName: "sastmartdocstfstate$(environment)"
+              backendAzureRmContainerName: "tfstate"
+              backendAzureRmKey: "smartdocs-$(environment).terraform.tfstate"
+
+          - task: TerraformTaskV4@4
+            displayName: "Terraform Validate"
+            inputs:
+              provider: "azurerm"
+              command: "validate"
+              workingDirectory: $(workingDirectory)
+
+  - stage: SecurityScan
+    displayName: "Security Scan"
+    dependsOn: TerraformValidate
+    jobs:
+      - job: Checkov
+        displayName: "Run Checkov Security Scan"
+        pool:
+          vmImage: "ubuntu-latest"
+
+        steps:
+          - checkout: self
+            displayName: "Checkout Repository"
+
+          - task: Bash@3
+            displayName: "Install Checkov"
+            inputs:
+              targetType: "inline"
+              script: |
+                pip3 install checkov
+
+          - task: Bash@3
+            displayName: "Run Checkov Scan"
+            inputs:
+              targetType: "inline"
+              script: |
+                checkov -d $(workingDirectory) --framework terraform --output junitxml --output-file-path $(Agent.TempDirectory)/checkov-report.xml
+            continueOnError: true
+
+          - task: PublishTestResults@2
+            displayName: "Publish Checkov Results"
+            inputs:
+              testResultsFormat: "JUnit"
+              testResultsFiles: "$(Agent.TempDirectory)/checkov-report.xml"
+              testRunTitle: "Checkov Security Scan"
+            condition: always()
+
+  - stage: TerraformPlan
+    displayName: "Terraform Plan"
+    dependsOn:
+      - TerraformValidate
+      - SecurityScan
+    condition: succeeded()
+    jobs:
+      - job: Plan
+        displayName: "Generate Terraform Plan"
+        pool:
+          vmImage: "ubuntu-latest"
+
+        steps:
+          - checkout: self
+            displayName: "Checkout Repository"
+
+          - task: TerraformInstaller@1
+            displayName: "Install Terraform"
+            inputs:
+              terraformVersion: $(terraformVersion)
+
+          - task: TerraformTaskV4@4
+            displayName: "Terraform Init"
+            inputs:
+              provider: "azurerm"
+              command: "init"
+              workingDirectory: $(workingDirectory)
+              backendServiceArm: "Azure-ServiceConnection"
+              backendAzureRmResourceGroupName: "rg-smartdocs-tfstate-$(environment)"
+              backendAzureRmStorageAccountName: "sastmartdocstfstate$(environment)"
+              backendAzureRmContainerName: "tfstate"
+              backendAzureRmKey: "smartdocs-$(environment).terraform.tfstate"
+
+          - task: TerraformTaskV4@4
+            displayName: "Terraform Plan"
+            inputs:
+              provider: "azurerm"
+              command: "plan"
+              workingDirectory: $(workingDirectory)
+              commandOptions: '-var-file="$(environment)/terraform.tfvars" -out=tfplan'
+              environmentServiceNameAzureRM: "Azure-ServiceConnection"
+
+          - task: PublishPipelineArtifact@1
+            displayName: "Publish Terraform Plan"
+            inputs:
+              targetPath: "$(workingDirectory)/tfplan"
+              artifact: "terraform-plan-$(environment)"
+
+          - task: Bash@3
+            displayName: "Show Terraform Plan"
+            inputs:
+              targetType: "inline"
+              script: |
+                cd $(workingDirectory)
+                terraform show -no-color tfplan > $(Agent.TempDirectory)/terraform-plan-output.txt
+                echo "##vso[task.uploadsummary]$(Agent.TempDirectory)/terraform-plan-output.txt"
+
+  - stage: CostEstimation
+    displayName: "Cost Estimation"
+    dependsOn: TerraformPlan
+    condition: succeeded()
+    jobs:
+      - job: Infracost
+        displayName: "Generate Cost Estimation"
+        pool:
+          vmImage: "ubuntu-latest"
+
+        steps:
+          - checkout: self
+            displayName: "Checkout Repository"
+
+          - task: DownloadPipelineArtifact@2
+            displayName: "Download Terraform Plan"
+            inputs:
+              buildType: "current"
+              artifactName: "terraform-plan-$(environment)"
+              targetPath: $(workingDirectory)
+
+          - task: Bash@3
+            displayName: "Install Infracost"
+            inputs:
+              targetType: "inline"
+              script: |
+                curl -fsSL https://raw.githubusercontent.com/infracost/infracost/master/scripts/install.sh | sh
+
+          - task: Bash@3
+            displayName: "Generate Cost Breakdown"
+            inputs:
+              targetType: "inline"
+              script: |
+                cd $(workingDirectory)
+                infracost breakdown --path tfplan --format table > $(Agent.TempDirectory)/cost-estimation.txt
+                echo "##vso[task.uploadsummary]$(Agent.TempDirectory)/cost-estimation.txt"
+            env:
+              INFRACOST_API_KEY: $(INFRACOST_API_KEY)
+
+  - stage: TerraformApply
+    displayName: "Terraform Apply"
+    dependsOn:
+      - TerraformPlan
+      - CostEstimation
+    condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.SourceBranch'], 'refs/heads/develop')))
+    jobs:
+      - deployment: Apply
+        displayName: "Apply Terraform Configuration"
+        pool:
+          vmImage: "ubuntu-latest"
+        environment: "$(environment)"
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                  displayName: "Checkout Repository"
+
+                - task: TerraformInstaller@1
+                  displayName: "Install Terraform"
+                  inputs:
+                    terraformVersion: $(terraformVersion)
+
+                - task: DownloadPipelineArtifact@2
+                  displayName: "Download Terraform Plan"
+                  inputs:
+                    buildType: "current"
+                    artifactName: "terraform-plan-$(environment)"
+                    targetPath: $(workingDirectory)
+
+                - task: TerraformTaskV4@4
+                  displayName: "Terraform Init"
+                  inputs:
+                    provider: "azurerm"
+                    command: "init"
+                    workingDirectory: $(workingDirectory)
+                    backendServiceArm: "Azure-ServiceConnection"
+                    backendAzureRmResourceGroupName: "rg-smartdocs-tfstate-$(environment)"
+                    backendAzureRmStorageAccountName: "sastmartdocstfstate$(environment)"
+                    backendAzureRmContainerName: "tfstate"
+                    backendAzureRmKey: "smartdocs-$(environment).terraform.tfstate"
+
+                - task: TerraformTaskV4@4
+                  displayName: "Terraform Apply"
+                  condition: ne('${{ parameters.action }}', 'destroy')
+                  inputs:
+                    provider: "azurerm"
+                    command: "apply"
+                    workingDirectory: $(workingDirectory)
+                    commandOptions: "tfplan"
+                    environmentServiceNameAzureRM: "Azure-ServiceConnection"
+
+                - task: TerraformTaskV4@4
+                  displayName: "Terraform Destroy"
+                  condition: eq('${{ parameters.action }}', 'destroy')
+                  inputs:
+                    provider: "azurerm"
+                    command: "destroy"
+                    workingDirectory: $(workingDirectory)
+                    commandOptions: '-var-file="$(environment)/terraform.tfvars" -auto-approve'
+                    environmentServiceNameAzureRM: "Azure-ServiceConnection"
+
+  - stage: PostDeployment
+    displayName: "Post Deployment"
+    dependsOn: TerraformApply
+    condition: succeeded()
+    jobs:
+      - job: HealthCheck
+        displayName: "Infrastructure Health Check"
+        pool:
+          vmImage: "ubuntu-latest"
+
+        steps:
+          - task: AzureCLI@2
+            displayName: "Check Resource Health"
+            inputs:
+              azureSubscription: "Azure-ServiceConnection"
+              scriptType: "bash"
+              scriptLocation: "inlineScript"
+              inlineScript: |
+                echo "Checking resource group health..."
+                az group show --name "rg-smartdocs-$(environment)" --query "properties.provisioningState" -o tsv
+
+                echo "Checking App Services health..."
+                az webapp list --resource-group "rg-smartdocs-$(environment)" --query "[].{name:name,state:state}" -o table
+
+                echo "Checking SQL Database health..."
+                az sql db list --resource-group "rg-smartdocs-$(environment)" --server "sql-smartdocs-$(environment)" --query "[].{name:name,status:status}" -o table
+
+      - job: NotifyTeams
+        displayName: "Notify Teams"
+        dependsOn: HealthCheck
+        condition: always()
+
+        steps:
+          - task: Bash@3
+            displayName: "Send Teams Notification"
+            inputs:
+              targetType: "inline"
+              script: |
+                if [ "$(Agent.JobStatus)" == "Succeeded" ]; then
+                  STATUS="✅ SUCCESS"
+                  COLOR="good"
+                else
+                  STATUS="❌ FAILED"
+                  COLOR="danger"
+                fi
+
+                curl -H "Content-Type: application/json" -d '{
+                  "@type": "MessageCard",
+                  "@context": "http://schema.org/extensions",
+                  "themeColor": "'$COLOR'",
+                  "summary": "Infrastructure Deployment",
+                  "sections": [{
+                    "activityTitle": "SmartDocs Infrastructure Deployment",
+                    "activitySubtitle": "Environment: $(environment)",
+                    "facts": [{
+                      "name": "Status",
+                      "value": "'$STATUS'"
+                    }, {
+                      "name": "Build",
+                      "value": "$(Build.BuildNumber)"
+                    }, {
+                      "name": "Branch",
+                      "value": "$(Build.SourceBranchName)"
+                    }]
+                  }]
+                }' $(TEAMS_WEBHOOK_URL)
+            condition: and(always(), ne(variables['TEAMS_WEBHOOK_URL'], ''))
