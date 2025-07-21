@@ -273,3 +273,186 @@ docker-compose.override.yml
 # Local development files
 appsettings.Local.json
 appsettings.*.Local.json
+
+# Build outputs and compiled files
+**/bin/
+**/obj/
+**/dist/
+**/build/
+**/out/
+**/target/
+
+# Package manager lock files (keep package-lock.json but ignore others)
+yarn.lock
+pnpm-lock.yaml
+
+# Angular specific
+.angular/
+**/e2e/reports/
+**/e2e/screenshots/
+**/.browserslistrc
+
+# .NET specific additions
+**/*.user
+**/*.userosscache
+**/*.sln.docstates
+**/[Aa]pp_[Dd]ata/
+**/[Bb]in/
+**/[Oo]bj/
+**/[Ll]og/
+**/[Ll]ogs/
+**/.vs/
+**/packages/
+**/TestResults/
+**/*.vsidx
+**/*.vspscc
+**/*.vssscc
+.builds/
+*.pidb
+*.svclog
+*.scc
+
+# ASP.NET Scaffolding
+**/ScaffoldingReadMe.txt
+
+# StyleCop
+StyleCopReport.xml
+
+# Files built by Visual Studio
+*_i.c
+*_p.c
+*_h.h
+*.ilk
+*.meta
+*.obj
+*.iobj
+*.pch
+*.pdb
+*.ipdb
+*.pgc
+*.pgd
+*.rsp
+*.sbr
+*.tlb
+*.tli
+*.tlh
+*.tmp
+*.tmp_proj
+*_wpftmp.csproj
+*.log
+*.tlog
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.svclog
+*.scc
+
+# Terraform additional
+**/.terraform/
+**/.terraform.lock.hcl
+**/terraform.tfstate.d/
+**/crash.log
+**/crash.*.log
+**/*.tfvars.json
+**/override.tf
+**/override.tf.json
+**/*_override.tf
+**/*_override.tf.json
+**/.terraformrc
+**/terraform.rc
+
+# CI/CD and deployment
+**/publish/
+**/PublishProfiles/
+**/*.pubxml
+**/*.pubxml.user
+**/*.publishproj
+**/FolderProfile.pubxml
+**/FolderProfile.pubxml.user
+
+# Azure specific
+**/.azure/
+**/azds.yaml
+**/.azds/
+
+# Docker additional
+**/.dockerignore
+**/docker-compose.override.yml
+**/docker-compose.*.yml
+!docker-compose.yml
+!docker-compose.prod.yml
+
+# IDE and editor files
+**/.idea/
+**/.vscode/settings.json
+**/.vscode/launch.json
+**/.vscode/tasks.json
+!.vscode/extensions.json
+**/*.swp
+**/*.swo
+**/*~
+
+# OS specific
+**/.DS_Store
+**/Thumbs.db
+**/*.tmp
+**/*.temp
+
+# Security and secrets
+**/*.key
+**/*.pem
+**/*.p12
+**/*.pfx
+**/*.cer
+**/*.crt
+**/secrets.json
+**/appsettings.secrets.json
+**/connectionstrings.json
+
+# Local development
+**/appsettings.Local.json
+**/appsettings.Development.Local.json
+**/local.settings.json
+**/.env.local
+**/.env.*.local
+
+# Test results and coverage
+**/TestResults/
+**/coverage/
+**/*.trx
+**/*.coverage
+**/*.coveragexml
+
+# Backup files
+**/*.bak
+**/*.backup
+**/*.orig
+
+# Temporary and cache files
+**/tmp/
+**/temp/
+**/.cache/
+**/.tmp/
+**/node_modules/.cache/
+
+# Package manager directories
+**/node_modules/
+**/jspm_packages/
+**/bower_components/
+
+# Runtime and process files
+**/*.pid
+**/*.seed
+**/*.pid.lock
+
+# Application specific uploads and data
+**/uploads/
+**/documents/
+**/data/
+**/logs/
+**/storage/
+
+# Generated documentation
+**/docs/build/
+**/docs/dist/
